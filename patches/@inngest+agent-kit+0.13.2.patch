@@ -1,0 +1,52 @@
+diff --git a/node_modules/@inngest/agent-kit/dist/chunk-BSWKEFTT.js b/node_modules/@inngest/agent-kit/dist/chunk-BSWKEFTT.js
+index 50538d4..4b9ca40 100644
+--- a/node_modules/@inngest/agent-kit/dist/chunk-BSWKEFTT.js
++++ b/node_modules/@inngest/agent-kit/dist/chunk-BSWKEFTT.js
+@@ -529,20 +529,24 @@ var responseParser2 = (input) => {
+       }));
+     }
+     if (((_b = (_a2 = message.tool_calls) == null ? void 0 : _a2.length) != null ? _b : 0) > 0) {
+-      acc.push(__spreadProps(__spreadValues({}, base), {
+-        type: "tool_call",
+-        tools: message.tool_calls.map((tool) => {
+-          return {
+-            type: "tool",
+-            id: tool.id,
+-            name: tool.function.name,
+-            function: tool.function.name,
+-            // Duplicate for backward compatibility
+-            // Use safe parser to handle OpenAI's JSON quirks (like backticks in strings)
+-            input: safeParseOpenAIJson(tool.function.arguments || "{}")
+-          };
+-        })
+-      }));
++      // Filter out tool_calls where function is null (Groq/Llama sometimes return this)
++      const validToolCalls = message.tool_calls.filter((t) => t && t.function);
++      if (validToolCalls.length > 0) {
++        acc.push(__spreadProps(__spreadValues({}, base), {
++          type: "tool_call",
++          tools: validToolCalls.map((tool) => {
++            return {
++              type: "tool",
++              id: tool.id,
++              name: tool.function.name,
++              function: tool.function.name,
++              // Duplicate for backward compatibility
++              // Use safe parser to handle OpenAI's JSON quirks (like backticks in strings)
++              input: safeParseOpenAIJson(tool.function.arguments || "{}")
++            };
++          })
++        }));
++      }
+     }
+     return acc;
+   }, []);
+@@ -1597,7 +1601,7 @@ var Agent = class _Agent {
+             type: "tool",
+             id: tool.id,
+             name: tool.name,
+-            input: tool.input.arguments
++            input: tool.input != null && typeof tool.input === "object" && "arguments" in tool.input ? tool.input.arguments : (tool.input != null ? tool.input : {})
+           },
+           content: result,
+           stop_reason: "tool"
