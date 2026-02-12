@@ -133,7 +133,7 @@ export function SourceControlPanel({ projectId }: SourceControlPanelProps) {
                 <div
                   key={file._id}
                   className="flex items-center gap-1.5 py-0.5 px-1 rounded text-xs cursor-pointer hover:bg-accent/50"
-                  onClick={() => openFile(file._id, { pinned: false, diff: true })}
+                  onClick={() => openFile(projectId, file._id, { pinned: false, diff: true })}
                 >
                   <span className="text-green-600 dark:text-green-400 w-4 shrink-0">
                     {status(file)}
@@ -177,7 +177,7 @@ export function SourceControlPanel({ projectId }: SourceControlPanelProps) {
                 <div
                   key={file._id}
                   className="flex items-center gap-1.5 py-0.5 px-1 rounded text-xs cursor-pointer hover:bg-accent/50"
-                  onClick={() => openFile(file._id, { pinned: false })}
+                  onClick={() => openFile(projectId, file._id, { pinned: false })}
                 >
                   <span className="text-muted-foreground w-4 shrink-0">
                     {status(file)}
