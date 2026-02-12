@@ -38,13 +38,28 @@ Respond with ONLY the code to insert, or the single word EMPTY (no quotes) when 
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
+    const authObj = await auth();
+    let userId = authObj.userId;
+
+    if (!userId && process.env.NODE_ENV === "development") {
+      console.log("[POST /api/suggestion] Dev mode: Bypassing auth check");
+      userId = "dev-user";
+    }
 
     if (!userId) {
+      console.warn("[POST /api/suggestion] Unauthorized request");
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 403 },
       );
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      console.warn("[POST /api/suggestion] Invalid JSON body", e);
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
     const {
@@ -56,7 +71,7 @@ export async function POST(request: Request) {
       textAfterCursor,
       nextLines,
       lineNumber,
-    } = await request.json();
+    } = body;
 
     if (!code) {
       return NextResponse.json(
@@ -67,28 +82,37 @@ export async function POST(request: Request) {
 
     const prompt = SUGGESTION_PROMPT
       .replace("{fileName}", fileName)
-      .replace("{code}", code)
-      .replace("{currentLine}", currentLine)
-      .replace("{previousLines}", previousLines || "")
-      .replace("{textBeforeCursor}", textBeforeCursor)
-      .replace("{textAfterCursor}", textAfterCursor)
-      .replace("{nextLines}", nextLines || "")
-      .replace("{lineNumber}", lineNumber.toString());
+      .replace("{code}", () => code)
+      .replace("{currentLine}", () => currentLine)
+      .replace("{previousLines}", () => previousLines || "")
+      .replace("{textBeforeCursor}", () => textBeforeCursor)
+      .replace("{textAfterCursor}", () => textAfterCursor)
+      .replace("{nextLines}", () => nextLines || "")
+      .replace("{lineNumber}", () => lineNumber.toString());
 
     const model = getTextModel();
     const { text } = await generateText({
       model,
-      prompt,
+      messages: [{ role: "user", content: prompt }],
     });
+
+    console.log("[POST /api/suggestion] Prompt generated text:", text);
 
     const raw = (text ?? "").trim();
     const suggestion =
       raw.toUpperCase() === "EMPTY" || raw === "" ? "" : raw;
 
+    console.log("[POST /api/suggestion] Final suggestion:", suggestion || "(empty)");
+
     return NextResponse.json({ suggestion });
-  } catch (err) {
+  } catch (err: any) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[POST /api/suggestion]", msg, err);
+    console.error("[POST /api/suggestion]", msg, {
+      error: err,
+      url: err.url,
+      status: err.status || err.statusCode,
+      body: err.responseBody,
+    });
     return NextResponse.json(
       {
         error: "Failed to generate suggestion",
