@@ -25,15 +25,17 @@ const SUGGESTION_PROMPT = `You are a code suggestion assistant.
 <instructions>
 Follow these steps IN ORDER:
 
-1. First, look at next_lines. If next_lines contains ANY code, check if it continues from where the cursor is. If it does, return empty string immediately - the code is already written.
+1. Analyze the cursor position relative to the code structure. If next_lines effectively duplicates what you would suggest, return EMPTY.
 
-2. Check if before_cursor ends with a complete statement (;, }, )). If yes, return empty string.
 
-3. Only if steps 1 and 2 don't apply: suggest what should be typed at the cursor position, using context from full_code.
+2. If next_lines effectively duplicates what you would suggest, return EMPTY. But if next_lines is just a closing brace or unrelated code, provide a suggestion.
+
+3. Even if before_cursor ends with '}', do NOT automatically return empty; check if more code (like 'else', 'catch', or another function) makes sense.
 
 Your suggestion is inserted immediately after the cursor, so never suggest code that's already in the file.
 
-Respond with ONLY the code to insert, or the single word EMPTY (no quotes) when no completion is needed. No other text or explanation.
+Respond with ONLY the code to insert, or the single word EMPTY (no quotes) when no completion is needed. No other text or explanation. suggestio should never be empty send anything
+
 </instructions>`;
 
 export async function POST(request: Request) {
