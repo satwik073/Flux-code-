@@ -3,7 +3,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 /** Scitely base URL (OpenAI-compatible). */
 const SCITELY_BASE_URL = "https://api.scitely.com/v1";
 /** Scitely default model (Community tier). Override with SCITELY_MODEL in .env.local. */
-const SCITELY_DEFAULT_MODEL = "glm-4.6";
+const SCITELY_DEFAULT_MODEL = "deepseek-v3.2";
 
 /**
  * Get a text-generation model for suggestion/quick-edit APIs.
@@ -16,10 +16,15 @@ export function getTextModel() {
       "Code completion uses Scitely only. Set SCITELY_API_KEY in .env.local (get a key at platform.scitely.com)."
     );
   }
-  const model =
-    process.env.SCITELY_MODEL?.trim() || SCITELY_DEFAULT_MODEL;
-  return createOpenAI({
-    baseURL: SCITELY_BASE_URL,
+
+  // Allow overriding base URL via env var, ensuring it handles compatibility
+  const baseURL = process.env.SCITELY_BASE_URL || SCITELY_BASE_URL;
+  const model = process.env.SCITELY_MODEL?.trim() || SCITELY_DEFAULT_MODEL;
+
+  const openai = createOpenAI({
+    baseURL,
     apiKey: scitelyKey,
-  })(model);
+  });
+
+  return openai.chat(model);
 }

@@ -32,7 +32,7 @@ interface MessageEvent {
 /** Scitely (free unlimited) — prefer when SCITELY_API_KEY is set. Model IDs are lowercase (see platform.scitely.com/docs/models). */
 const SCITELY_BASE_URL = "https://api.scitely.com/v1";
 /** GLM 4.6 (Zhipu AI) for code editing; alternatives: qwen3-coder-plus, deepseek-r1, qwen3-32b */
-const DEFAULT_SCITELY_MODEL = "glm-4.6";
+const DEFAULT_SCITELY_MODEL = "deepseek-v3.2";
 
 /** Groq default coding model (Llama). */
 const DEFAULT_GROQ_CODING_MODEL = "llama-3.3-70b-versatile";

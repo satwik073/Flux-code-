@@ -43,7 +43,16 @@ If the instruction is unclear or cannot be applied, return the original code unc
 export async function POST(request: Request) {
   try {
     const { userId } = await auth();
-    const { selectedCode, fullCode, instruction } = await request.json();
+
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      console.warn("[POST /api/quick-edit] Invalid JSON body", e);
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const { selectedCode, fullCode, instruction } = body;
 
     if (!userId) {
       return NextResponse.json(
@@ -105,13 +114,18 @@ export async function POST(request: Request) {
     const { output } = await generateText({
       model,
       output: Output.object({ schema: quickEditSchema }),
-      prompt,
+      messages: [{ role: "user", content: prompt }],
     });
 
     return NextResponse.json({ editedCode: output.editedCode });
-  } catch (err) {
+  } catch (err: any) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[POST /api/quick-edit]", msg, err);
+    console.error("[POST /api/quick-edit]", msg, {
+      error: err,
+      url: err.url,
+      status: err.status || err.statusCode,
+      body: err.responseBody,
+    });
     return NextResponse.json(
       {
         error: "Failed to generate edit",
@@ -120,4 +134,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-};
+}
